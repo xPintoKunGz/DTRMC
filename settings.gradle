@@ -9,7 +9,6 @@ pluginManagement {
     }
 }
 
-// Should match your modid
 rootProject.name = 'dtrmc'
 
 include 'libs'

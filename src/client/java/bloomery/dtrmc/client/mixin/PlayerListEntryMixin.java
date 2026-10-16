@@ -1,4 +1,4 @@
-package bloomery.dtrmc.mixin;
+package bloomery.dtrmc.client.mixin;
 
 import bloomery.dtrmc.NicknameManager;
 import com.mojang.authlib.GameProfile;
@@ -15,7 +15,7 @@ public abstract class PlayerListEntryMixin {
     @Shadow public abstract GameProfile getProfile();
 
     @Inject(method = "getDisplayName", at = @At("RETURN"), cancellable = true)
-    private void modifyDisplayName(CallbackInfoReturnable<Text> cir) {
+    private void dtrmc$setCustomDisplayName(CallbackInfoReturnable<Text> cir) {
         GameProfile profile = this.getProfile();
         if (profile != null && profile.getId() != null) {
             String customNick = NicknameManager.getNickname(profile.getId());

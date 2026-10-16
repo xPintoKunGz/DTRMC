@@ -20,7 +20,6 @@ public class PlayerEntityMixin {
         }
     }
 
-    // เพิ่มตัวนี้เพื่อให้ Plasmo Voice Overlay และ UI อื่นๆ ดึงชื่อ Custom ไปแสดงผล
     @Inject(method = "getName", at = @At("RETURN"), cancellable = true)
     private void modifyName(CallbackInfoReturnable<Text> cir) {
         PlayerEntity player = (PlayerEntity) (Object) this;
