@@ -1,4 +1,4 @@
-# 🛡️ Devathip Registry (Nickname & Utilities System)
+# 🛡️ Devathip Registry Mod (Nickname & Utilities System)
 
 A robust and lightweight **Minecraft Fabric Mod (1.20.1)** designed to provide seamless custom nickname management, global nametag visibility control, and client-side utility features for both servers and players.
 
