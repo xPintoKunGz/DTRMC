@@ -105,7 +105,7 @@ public class NicknameManager {
 
     public static void syncDataToAll(UUID uuid) {
         String customName = nicknames.get(uuid);
-        boolean isHidden = hiddenNametags.contains(uuid);
+        boolean isHidden = hiddenNametags.contains(uuid) || globalNametagsHidden;
 
         if (SERVER != null) {
             ServerPlayerEntity player = SERVER.getPlayerManager().getPlayer(uuid);
@@ -115,7 +115,8 @@ public class NicknameManager {
                     player.setCustomNameVisible(false);
                 } else {
                     player.setCustomName(Text.literal(customName));
-                    player.setCustomNameVisible(true);
+                    // แก้ไขจุดนี้: เคารพสถานะซ่อน Nametag ทั้งแบบส่วนตัวและ Global
+                    player.setCustomNameVisible(!isHidden);
                 }
                 SERVER.getPlayerManager().sendToAll(new PlayerListS2CPacket(PlayerListS2CPacket.Action.UPDATE_DISPLAY_NAME, player));
             }
@@ -139,13 +140,23 @@ public class NicknameManager {
         String customName = nicknames.get(uuid);
         boolean isHidden = hiddenNametags.contains(uuid);
 
-        // ถ้าผู้เล่นคนนี้เคยตั้งชื่อไว้ ให้แปะชื่อและซ่อน Nametag ทันทีที่เข้าเกม
         if (customName != null && !customName.isEmpty()) {
             player.setCustomName(Text.literal(customName));
             player.setCustomNameVisible(!isHidden);
         }
 
-        // ส่งข้อมูลรายชื่อทั้งหมดที่มีอยู่ในเซิร์ฟเวอร์ ไปให้ผู้เล่นใหม่คนนี้ได้รับรู้ด้วย
+        if (globalNametagsHidden && SERVER != null) {
+            net.minecraft.scoreboard.ServerScoreboard scoreboard = SERVER.getScoreboard();
+            net.minecraft.scoreboard.Team team = scoreboard.getTeam("dtrmc_nametags");
+            if (team != null) {
+                scoreboard.addPlayerToTeam(player.getGameProfile().getName(), team);
+            }
+
+            PacketByteBuf globalBuf = new PacketByteBuf(Unpooled.buffer());
+            globalBuf.writeBoolean(globalNametagsHidden);
+            ServerPlayNetworking.send(player, GLOBAL_NAMETAG_PACKET_ID, globalBuf);
+        }
+
         for (Map.Entry<UUID, String> entry : nicknames.entrySet()) {
             UUID targetUuid = entry.getKey();
             String nick = entry.getValue();
@@ -164,5 +175,55 @@ public class NicknameManager {
     private static class Data {
         Map<UUID, String> nicknames;
         Set<UUID> hiddenNametags;
+    }
+
+    public static boolean isNameTaken(String name, UUID excludeUuid) {
+        String plainNew = name.replaceAll("§[0-9a-fk-or]", "").trim();
+
+        if (SERVER != null) {
+            for (ServerPlayerEntity p : SERVER.getPlayerManager().getPlayerList()) {
+                if (!p.getUuid().equals(excludeUuid)) {
+                    if (p.getGameProfile().getName().equalsIgnoreCase(plainNew)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        for (Map.Entry<UUID, String> entry : nicknames.entrySet()) {
+            if (!entry.getKey().equals(excludeUuid)) {
+                String plainExisting = entry.getValue().replaceAll("§[0-9a-fk-or]", "").trim();
+                if (plainExisting.equalsIgnoreCase(plainNew)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static final Identifier GLOBAL_NAMETAG_PACKET_ID = new Identifier("dtrmc", "sync_global_nametag");
+    private static boolean globalNametagsHidden = false;
+
+    public static boolean setGlobalNametagsHidden(boolean hidden) {
+        if (globalNametagsHidden == hidden) {
+            return false;
+        }
+        globalNametagsHidden = hidden;
+        syncGlobalNametagStateToAll();
+        return true;
+    }
+
+    public static boolean isGlobalNametagsHidden() {
+        return globalNametagsHidden;
+    }
+
+    public static void syncGlobalNametagStateToAll() {
+        if (SERVER != null) {
+            PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+            buf.writeBoolean(globalNametagsHidden);
+            for (ServerPlayerEntity onlinePlayer : SERVER.getPlayerManager().getPlayerList()) {
+                ServerPlayNetworking.send(onlinePlayer, GLOBAL_NAMETAG_PACKET_ID, buf);
+            }
+        }
     }
 }

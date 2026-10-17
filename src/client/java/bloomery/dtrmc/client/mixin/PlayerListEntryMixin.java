@@ -1,6 +1,7 @@
 package bloomery.dtrmc.client.mixin;
 
 import bloomery.dtrmc.NicknameManager;
+import bloomery.dtrmc.client.KeyInputHandler;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
@@ -18,6 +19,12 @@ public abstract class PlayerListEntryMixin {
     private void dtrmc$setCustomDisplayName(CallbackInfoReturnable<Text> cir) {
         GameProfile profile = this.getProfile();
         if (profile != null && profile.getId() != null) {
+
+            if (KeyInputHandler.isHoldingRevealKey()) {
+                cir.setReturnValue(Text.literal(profile.getName()));
+                return;
+            }
+
             String customNick = NicknameManager.getNickname(profile.getId());
             if (customNick != null && !customNick.isEmpty()) {
                 cir.setReturnValue(Text.literal(customNick));

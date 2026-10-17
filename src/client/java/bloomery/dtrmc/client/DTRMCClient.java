@@ -14,6 +14,17 @@ public class DTRMCClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		LOGGER.info("DTRMC: Client Initialized!");
 
+		KeyInputHandler.register();
+
+		net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(
+				NicknameManager.GLOBAL_NAMETAG_PACKET_ID, (client, handler, buf, responseSender) -> {
+					boolean hidden = buf.readBoolean();
+					client.execute(() -> {
+						bloomery.dtrmc.client.ClientNicknameData.setGlobalNametagsHidden(hidden);
+					});
+				}
+		);
+
 		if (net.fabricmc.api.EnvType.CLIENT.equals(net.fabricmc.loader.api.FabricLoader.getInstance().getEnvironmentType())) {
 			net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(
 					NicknameManager.SYNC_PACKET_ID,
@@ -24,7 +35,6 @@ public class DTRMCClient implements ClientModInitializer {
 						boolean hidden = buf.readBoolean();
 
 						client.execute(() -> {
-							// บันทึกลง Client Cache เพื่อให้เรนเดอร์ถูกต้องทันที
 							if (nick != null) {
 								NicknameManager.getNicknamesMap().put(uuid, nick);
 							} else {
