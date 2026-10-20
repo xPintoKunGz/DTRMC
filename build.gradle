@@ -5,8 +5,12 @@ plugins {
 
 repositories {
 	mavenCentral()
-	maven { url 'https://repo.plasmoverse.com/releases' }
-	maven { url 'https://repo.plasmoverse.com/snapshots' }
+	maven { url = 'https://maven.fabricmc.net/' } // Fabric repository
+	maven { url = 'https://modmaven.dev/' }
+	maven {
+		name = 'PlasmoVoice'
+		url = 'https://repo.plasmoverse.com/releases'
+	}
 }
 
 loom {
@@ -25,7 +29,9 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	compileOnly files("libs/plasmovoice-fabric-1.20.1-2.1.17.jar")
+	compileOnly "su.plo.voice.api:common:${project.plasmovoice_version}"
+	compileOnly "su.plo.voice.api:client:${project.plasmovoice_version}"
+	compileOnly "su.plo.voice.api:server:${project.plasmovoice_version}"
 }
 
 processResources {
